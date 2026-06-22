@@ -1,6 +1,7 @@
 package scheduler
 
 import (
+	"context"
 	"time"
 	_ "unsafe"
 
@@ -9,6 +10,20 @@ import (
 
 type Scheduler[P, R any] struct {
 	*world.World
+}
+
+func (s *Scheduler[P, R]) RunTask(ctx context.Context, interval time.Duration, task world.ExecFunc) {
+	ticker := time.NewTicker(interval)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			s.Exec(task)
+		case <-ctx.Done():
+			return
+		}
+	}
 }
 
 func (s *Scheduler[P, R]) Schedule(duration time.Duration, fn world.ExecFunc) {
