@@ -31,6 +31,18 @@ func (s *Scheduler[P, R]) Schedule(duration time.Duration, fn world.ExecFunc) {
 	s.Exec(fn)
 }
 
+func (s *Scheduler[P, R]) ScheduleCtx(duration time.Duration, ctx context.Context, fn world.ExecFunc) {
+	timer := time.NewTimer(duration)
+	defer timer.Stop()
+
+	select {
+	case <-timer.C:
+		s.Exec(fn)
+	case <-ctx.Done():
+		return
+	}
+}
+
 func (s *Scheduler[P, R]) ReturnExec(f ReturnExecFunc[R]) R {
 	c := make(chan struct{})
 	t := &returnTransaction[R]{c: c, f: f}
