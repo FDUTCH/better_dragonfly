@@ -31,15 +31,16 @@ func (s *Scheduler[P, R]) Schedule(duration time.Duration, fn world.ExecFunc) {
 	s.Exec(fn)
 }
 
-func (s *Scheduler[P, R]) ScheduleCtx(duration time.Duration, ctx context.Context, fn world.ExecFunc) {
+func (s *Scheduler[P, R]) ScheduleCtx(duration time.Duration, ctx context.Context, fn world.ExecFunc) bool {
 	timer := time.NewTimer(duration)
 	defer timer.Stop()
 
 	select {
 	case <-timer.C:
-		s.Exec(fn)
+		<-s.Exec(fn)
+		return true
 	case <-ctx.Done():
-		return
+		return false
 	}
 }
 
